@@ -1,11 +1,59 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { useAppSelector } from "../store/hooks";
+import { useAuth } from "../context/AuthContext";
 import api from "../api/client";
 import AnimeCard from "../components/AnimeCard";
 import Spinner from "../components/Spinner";
-import type { Anime, HomeData } from "../types";
+import type { Anime, HomeData, WatchlistEntry } from "../types";
+
+interface Slide {
+  malId: number;
+  title: string;
+  image: string;
+  backdrop: string;
+  synopsis: string;
+  score: number | null;
+  year: number | null;
+  episodes: number | null;
+  type: string;
+  status: string;
+}
+
+function toSlide(a: Anime): Slide {
+  return {
+    malId: a.malId,
+    title: a.title,
+    image: a.image,
+    backdrop: a.backdrop || a.image,
+    synopsis: a.synopsis || '',
+    score: a.score,
+    year: a.year,
+    episodes: a.episodes,
+    type: a.type,
+    status: a.status,
+  };
+}
+
+function watchlistToSlide(w: WatchlistEntry): Slide {
+  return {
+    malId: w.malId,
+    title: w.title,
+    image: w.image,
+    backdrop: w.image,
+    synopsis: '',
+    score: w.score,
+    year: w.year,
+    episodes: null,
+    type: w.type,
+    status: w.status.replace(/_/g, ' '),
+  };
+}
 
 export default function Home() {
+  const { user } = useAuth();
+  const watchlist = useAppSelector((state) => state.library.watchlist);
+
   const [home, setHome] = useState<HomeData | null>(null);
   const [season, setSeason] = useState<Anime[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,10 +80,18 @@ export default function Home() {
     run();
   }, []);
 
-  const heroList = (home?.hero?.length ? home.hero : home?.trending || []).slice(0, 6);
+  // When logged in, the floating slide bar shows the user's list.
+  const loggedInSlides: Slide[] = user ? watchlist.map(watchlistToSlide) : [];
+  const featuredSlides: Slide[] = (home?.hero?.length ? home.hero : home?.trending || [])
+    .slice(0, 6)
+    .map(toSlide);
+  const heroList = user && loggedInSlides.length ? loggedInSlides : featuredSlides;
   const hero = heroList[active] || heroList[0];
 
-  // Auto-rotate hero slides
+  useEffect(() => {
+    setActive(0);
+  }, [heroList.length, user?._id]);
+
   useEffect(() => {
     if (heroList.length <= 1) return;
     const timer = setInterval(() => {
@@ -53,7 +109,6 @@ export default function Home() {
 
   return (
     <div className="page--home">
-      {/* Floating hero slides */}
       {loading ? (
         <div className="hero"><Spinner label="Loading..." /></div>
       ) : hero ? (
@@ -67,10 +122,10 @@ export default function Home() {
             <div className="hero__content">
               <span className="hero__eyebrow">
                 <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#a855f7" }} />
-                Featured
+                {user ? "My List" : "Featured"}
               </span>
               <h1>{hero.title}</h1>
-              {hero.titleJapanese ? <p className="hero__jp" style={{ color: "#9aa3b8", fontSize: "0.9rem", marginBottom: 10 }}>{hero.titleJapanese}</p> : null}
+              {hero.type ? <p style={{ color: "#9aa3b8", fontSize: "0.9rem", marginBottom: 10 }}>{hero.type}{hero.year ? ` • ${hero.year}` : ''}{hero.score ? ` • ★ ${hero.score}` : ''}</p> : null}
               <div className="hero__meta">
                 {hero.score ? <span className="score-badge">★ {hero.score}</span> : null}
                 {hero.year ? <span>{hero.year}</span> : null}
@@ -78,15 +133,21 @@ export default function Home() {
                 {hero.type ? <span>{hero.type}</span> : null}
                 {hero.status ? <span>{hero.status}</span> : null}
               </div>
-              <p className="hero__synopsis" style={{ color: "#cfd5e6", fontSize: "0.95rem", lineHeight: 1.6, maxWidth: 600, marginBottom: 22, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                {hero.synopsis || "No synopsis available."}
-              </p>
+              {hero.synopsis ? (
+                <p style={{ color: "#cfd5e6", fontSize: "0.95rem", lineHeight: 1.6, maxWidth: 600, marginBottom: 22, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                  {hero.synopsis}
+                </p>
+              ) : user ? (
+                <p style={{ color: "#cfd5e6", fontSize: "0.95rem", marginBottom: 22 }}>
+                  Status: {hero.status}
+                </p>
+              ) : null}
               <div className="hero__actions">
-                <Link to={`/watch/${hero.malId}`} className="btn btn-primary btn-lg">
-                  ▶ Watch now
+                <Link to={`/anime/${hero.malId}`} className="btn btn-primary btn-lg">
+                  {user ? 'View details' : '▶ More info'}
                 </Link>
-                <Link to={`/anime/${hero.malId}`} className="btn btn-ghost btn-lg">
-                  More info
+                <Link to={`/watch/${hero.malId}`} className="btn btn-ghost btn-lg">
+                  Watch now
                 </Link>
               </div>
             </div>
@@ -95,9 +156,8 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Slide dots */}
           {heroList.length > 1 && (
-            <div className="hero__dots" style={{ position: "absolute", bottom: 24, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 8, zIndex: 5 }}>
+            <div style={{ position: "absolute", bottom: 24, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 8, zIndex: 5 }}>
               {heroList.map((_, i) => (
                 <button
                   key={i}
@@ -127,7 +187,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Horizontal rows */}
       {rows.map((section) =>
         !loading && section.list.length ? (
           <RowSection key={section.title} title={section.title} list={section.list} />

@@ -1,20 +1,16 @@
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { animeApi, type SearchParams } from '../api/anime';
 import { apiErrorMessage } from '../api/client';
+import { useAppSelector } from '../store/hooks';
+import { libraryApi } from '../api/library';
 import AnimeCard from '../components/AnimeCard';
 import Spinner from '../components/Spinner';
 import Dropdown, { type DropdownOption } from '../components/Dropdown';
 import type { Anime, AnimeGenre } from '../types';
 import useDebounce from '../hooks/useDebounce';
-
-const SEASON_OPTIONS: DropdownOption[] = [
-  { value: '', label: 'All seasons' },
-  { value: 'winter', label: 'Winter' },
-  { value: 'spring', label: 'Spring' },
-  { value: 'summer', label: 'Summer' },
-  { value: 'fall', label: 'Fall' },
-];
+import { useAuth } from '../context/AuthContext';
+import toast from 'react-hot-toast';
 
 const TYPE_OPTIONS: DropdownOption[] = [
   { value: '', label: 'All types' },
@@ -39,13 +35,27 @@ const SORT_OPTIONS: DropdownOption[] = [
   { value: 'title', label: 'Title A-Z' },
 ];
 
+const DEFAULT_FILTERS = {
+  q: '',
+  genres: [] as string[],
+  year: '',
+  type: '',
+  status: '',
+  orderBy: 'popularity',
+  page: 1,
+};
+
 export default function Browse() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const watchlist = useAppSelector((state) => state.library.watchlist);
+  const history = useAppSelector((state) => state.library.history);
+
   const [filters, setFilters] = useState({
     q: searchParams.get('q') || '',
     genres: (searchParams.get('genres') || '').split(',').filter(Boolean),
     year: searchParams.get('year') || '',
-    season: searchParams.get('season') || '',
     type: searchParams.get('type') || '',
     status: searchParams.get('status') || '',
     orderBy: searchParams.get('orderBy') || 'popularity',
@@ -58,6 +68,7 @@ export default function Browse() {
   const [error, setError] = useState('');
   const [pagination, setPagination] = useState<{ page: number; lastPage: number; hasNextPage: boolean } | null>(null);
   const [genreOpen, setGenreOpen] = useState(false);
+  const [surprising, setSurprising] = useState(false);
 
   useEffect(() => {
     animeApi.getGenres().then((response) => setGenres(response.data || [])).catch(() => {});
@@ -74,7 +85,6 @@ export default function Browse() {
       limit: 24,
       genres: filters.genres.join(','),
       year: filters.year,
-      season: filters.season,
       type: filters.type,
       status: filters.status,
       orderBy: filters.orderBy,
@@ -114,6 +124,34 @@ export default function Browse() {
     });
   };
 
+  const resetFilters = () => {
+    setFilters({ ...DEFAULT_FILTERS });
+  };
+
+  const surpriseMe = async () => {
+    setSurprising(true);
+    try {
+      // Prefer a random entry from the user's recent watch list / watchlist
+      const pool = history.length ? history : watchlist;
+      if (user && pool.length) {
+        const pick = pool[Math.floor(Math.random() * pool.length)];
+        if (pick?.malId) {
+          navigate(`/anime/${pick.malId}`);
+          return;
+        }
+      }
+      // Fallback: server's random anime
+      const res = await animeApi.getRandom();
+      const malId = res.data?.malId;
+      if (malId) navigate(`/anime/${malId}`);
+      else toast.error('No anime found');
+    } catch (e) {
+      toast.error(apiErrorMessage(e));
+    } finally {
+      setSurprising(false);
+    }
+  };
+
   const yearOptions: DropdownOption[] = [
     { value: '', label: 'Any year' },
     ...Array.from({ length: new Date().getFullYear() - 1999 }, (_, i) => new Date().getFullYear() - i).map((y) => ({
@@ -128,7 +166,7 @@ export default function Browse() {
         <div>
           <span className="page-heading__eyebrow">Browse</span>
           <h1>Discover anime</h1>
-          <p className="page-heading__sub">Search by title, filter by genre, year, season, format and status.</p>
+          <p className="page-heading__sub">Search by title, filter by genre, year, type and status.</p>
         </div>
       </div>
 
@@ -144,7 +182,6 @@ export default function Browse() {
           <span className="filterbar__count">{animeList.length} results</span>
         </div>
         <div className="filterbar__controls">
-          <Dropdown label="Season" value={filters.season} options={SEASON_OPTIONS} onChange={(v) => updateFilter('season', v)} />
           <Dropdown label="Type" value={filters.type} options={TYPE_OPTIONS} onChange={(v) => updateFilter('type', v)} />
           <Dropdown label="Status" value={filters.status} options={STATUS_OPTIONS} onChange={(v) => updateFilter('status', v)} />
           <Dropdown label="Sort" value={filters.orderBy} options={SORT_OPTIONS} onChange={(v) => updateFilter('orderBy', v)} />
@@ -182,6 +219,13 @@ export default function Browse() {
               </div>
             )}
           </div>
+
+          <button type="button" className="btn btn-primary btn-sm" onClick={surpriseMe} disabled={surprising}>
+            {surprising ? 'Surprising...' : '🎲 Surprise me'}
+          </button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={resetFilters}>
+            Reset
+          </button>
         </div>
       </div>
 

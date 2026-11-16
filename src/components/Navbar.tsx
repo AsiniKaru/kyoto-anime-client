@@ -1,11 +1,20 @@
 import { useEffect, useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [q, setQ] = useState('');
+
+  const submitSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = q.trim();
+    if (trimmed) navigate(`/browse?q=${encodeURIComponent(trimmed)}`);
+    else navigate('/browse');
+    setQ('');
+  };
 
   return (
     <header className="navbar">
@@ -20,11 +29,20 @@ export default function Navbar() {
           {isAuthenticated && (
             <NavLink to="/my-list" className={({ isActive }) => `nav-link ${isActive ? 'is-active' : ''}`}>My List</NavLink>
           )}
-          {isAuthenticated && (
-            <NavLink to="/ai" className={({ isActive }) => `nav-link ${isActive ? 'is-active' : ''}`}>AI Picks</NavLink>
-          )}
         </nav>
-        <div className="navbar__actions">
+
+        {/* Search bar */}
+        <form className="navbar__search" onSubmit={submitSearch} style={{ flex: 1, maxWidth: 420, display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 999, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--line)' }}>
+          <span style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>⌕</span>
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search anime..."
+            style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: 'var(--text)', fontSize: '0.88rem' }}
+          />
+        </form>
+
+        <div className="navbar__actions" style={{ marginLeft: 'auto' }}>
           {isAuthenticated ? (
             <div className="user-menu">
               <button
