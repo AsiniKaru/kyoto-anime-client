@@ -3,7 +3,13 @@ import { Link } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { fetchLibrary, removeFromWatchlist, updateWatchlistStatus } from "../store/slices/librarySlice";
 import { WATCH_STATUS_LABELS, WATCH_STATUS_OPTIONS } from "../utils/format";
+import Dropdown, { type DropdownOption } from "../components/Dropdown";
 import type { WatchStatus } from "../types";
+
+const STATUS_DROPDOWN_OPTIONS: DropdownOption[] = WATCH_STATUS_OPTIONS.map((o) => ({
+  value: o.value,
+  label: o.label,
+}));
 
 export default function MyList() {
   const dispatch = useAppDispatch();
@@ -21,7 +27,7 @@ export default function MyList() {
       <h1 className="text-3xl font-bold mb-2">My List</h1>
       <p className="text-slate-400 mb-6">Track what you are watching, planning, or completed.</p>
 
-      <div className="library-tabs mb-6">
+      <div className="library-tabs mb-6" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <button
           className={`filter-btn ${filter === "all" ? "is-active" : ""}`}
           onClick={() => setFilter("all")}
@@ -44,7 +50,7 @@ export default function MyList() {
       {visible.length === 0 ? (
         <div className="empty-state">
           <p className="muted">No titles in this list yet.</p>
-          <Link to="/search" className="btn btn-primary btn-sm">Browse anime</Link>
+          <Link to="/browse" className="btn btn-primary btn-sm">Browse anime</Link>
         </div>
       ) : (
         <div className="saved-grid">
@@ -58,21 +64,20 @@ export default function MyList() {
                 <span className="saved-card__status">
                   {WATCH_STATUS_LABELS[entry.status]}
                 </span>
-                <div className="saved-card__actions">
-                  <select
-                    value={entry.status}
-                    onChange={(e) =>
-                      dispatch(updateWatchlistStatus({ malId: entry.malId, status: e.target.value as WatchStatus }))
-                    }
-                    className="filter-select__control"
-                  >
-                    {WATCH_STATUS_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                  </select>
+                <div className="saved-card__actions" style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 8 }}>
+                  <div style={{ flex: 1, minWidth: 140 }}>
+                    <Dropdown
+                      label="Status"
+                      value={entry.status}
+                      options={STATUS_DROPDOWN_OPTIONS}
+                      onChange={(v) => dispatch(updateWatchlistStatus({ malId: entry.malId, status: v as WatchStatus }))}
+                      width={160}
+                    />
+                  </div>
                   <button
-                    className="btn btn-ghost btn-sm"
+                    className="btn btn-danger btn-sm"
                     onClick={() => dispatch(removeFromWatchlist(entry.malId))}
+                    title="Remove from list"
                   >
                     Remove
                   </button>

@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import api from "../api/client";
 import AnimeCard from "../components/AnimeCard";
 import Spinner from "../components/Spinner";
-import type { Anime, HomeData, WatchlistEntry } from "../types";
+import type { Anime, HomeData, HistoryEntry } from "../types";
 
 interface Slide {
   malId: number;
@@ -35,24 +35,52 @@ function toSlide(a: Anime): Slide {
   };
 }
 
-function watchlistToSlide(w: WatchlistEntry): Slide {
+function historyToAnime(h: HistoryEntry): Anime {
   return {
-    malId: w.malId,
-    title: w.title,
-    image: w.image,
-    backdrop: w.image,
+    malId: h.malId,
+    anilistId: h.malId,
+    idMal: null,
+    title: h.title,
+    titleDefault: h.title,
+    titleJapanese: '',
     synopsis: '',
-    score: w.score,
-    year: w.year,
+    background: '',
+    type: '',
+    formatKey: '',
+    source: '',
     episodes: null,
-    type: w.type,
-    status: w.status.replace(/_/g, ' '),
+    status: 'Watching',
+    statusKey: 'airing',
+    airing: true,
+    aired: '',
+    year: null,
+    season: '',
+    duration: '',
+    rating: '',
+    score: null,
+    scoredBy: 0,
+    rank: null,
+    popularity: 0,
+    members: 0,
+    favorites: 0,
+    genres: [],
+    themes: [],
+    demographics: [],
+    studios: [],
+    producers: [],
+    licensors: [],
+    image: h.image,
+    imageSmall: h.image,
+    backdrop: '',
+    trailer: null,
+    streaming: [],
+    externalUrl: '',
   };
 }
 
 export default function Home() {
   const { user } = useAuth();
-  const watchlist = useAppSelector((state) => state.library.watchlist);
+  const history = useAppSelector((state) => state.library.history);
 
   const [home, setHome] = useState<HomeData | null>(null);
   const [season, setSeason] = useState<Anime[]>([]);
@@ -80,17 +108,17 @@ export default function Home() {
     run();
   }, []);
 
-  // When logged in, the floating slide bar shows the user's list.
-  const loggedInSlides: Slide[] = user ? watchlist.map(watchlistToSlide) : [];
-  const featuredSlides: Slide[] = (home?.hero?.length ? home.hero : home?.trending || [])
+  const heroList: Slide[] = (home?.hero?.length ? home.hero : home?.trending || [])
     .slice(0, 6)
     .map(toSlide);
-  const heroList = user && loggedInSlides.length ? loggedInSlides : featuredSlides;
   const hero = heroList[active] || heroList[0];
+
+  // Continue watching: history entries with progress < 95
+  const continueWatching = (user ? history.filter((h) => (h.progress || 0) < 95) : []).slice(0, 12);
 
   useEffect(() => {
     setActive(0);
-  }, [heroList.length, user?._id]);
+  }, [heroList.length]);
 
   useEffect(() => {
     if (heroList.length <= 1) return;
@@ -122,7 +150,7 @@ export default function Home() {
             <div className="hero__content">
               <span className="hero__eyebrow">
                 <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#a855f7" }} />
-                {user ? "My List" : "Featured"}
+                Featured
               </span>
               <h1>{hero.title}</h1>
               {hero.type ? <p style={{ color: "#9aa3b8", fontSize: "0.9rem", marginBottom: 10 }}>{hero.type}{hero.year ? ` • ${hero.year}` : ''}{hero.score ? ` • ★ ${hero.score}` : ''}</p> : null}
@@ -137,17 +165,13 @@ export default function Home() {
                 <p style={{ color: "#cfd5e6", fontSize: "0.95rem", lineHeight: 1.6, maxWidth: 600, marginBottom: 22, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                   {hero.synopsis}
                 </p>
-              ) : user ? (
-                <p style={{ color: "#cfd5e6", fontSize: "0.95rem", marginBottom: 22 }}>
-                  Status: {hero.status}
-                </p>
               ) : null}
               <div className="hero__actions">
-                <Link to={`/anime/${hero.malId}`} className="btn btn-primary btn-lg">
-                  {user ? 'View details' : '▶ More info'}
+                <Link to={`/watch/${hero.malId}`} className="btn btn-primary btn-lg">
+                  ▶ Watch now
                 </Link>
-                <Link to={`/watch/${hero.malId}`} className="btn btn-ghost btn-lg">
-                  Watch now
+                <Link to={`/anime/${hero.malId}`} className="btn btn-ghost btn-lg">
+                  More info
                 </Link>
               </div>
             </div>
@@ -185,6 +209,14 @@ export default function Home() {
           <p className="font-medium">Couldn't load anime</p>
           <p className="text-sm mt-1">{error}</p>
         </div>
+      )}
+
+      {/* Continue watching (logged-in users) */}
+      {user && continueWatching.length > 0 && (
+        <RowSection
+          title="Continue Watching"
+          list={continueWatching.map(historyToAnime)}
+        />
       )}
 
       {rows.map((section) =>

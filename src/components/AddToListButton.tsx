@@ -4,6 +4,8 @@ import { apiErrorMessage } from "../api/client";
 import type { Anime, WatchStatus } from "../types";
 import toast from "react-hot-toast";
 
+const STATUSES: WatchStatus[] = ['watching', 'completed', 'plan_to_watch', 'on_hold', 'dropped'];
+
 export default function AddToListButton({ anime }: { anime: Anime }) {
   const [entry, setEntry] = useState<{ status: WatchStatus } | null>(null);
   const [loading, setLoading] = useState(false);
@@ -22,7 +24,7 @@ export default function AddToListButton({ anime }: { anime: Anime }) {
     };
   }, [anime.malId]);
 
-  const add = async (status: WatchStatus) => {
+  const add = async (status: WatchStatus = 'plan_to_watch') => {
     setLoading(true);
     try {
       const res = await libraryApi.addToWatchlist({
@@ -36,7 +38,21 @@ export default function AddToListButton({ anime }: { anime: Anime }) {
         status,
       });
       setEntry({ status: res.data.status });
-      toast.success("Added to your list");
+      toast.success(`Added to ${res.data.status.replace(/_/g, ' ')}`);
+    } catch (e) {
+      toast.error(apiErrorMessage(e));
+    } finally {
+      setLoading(false);
+      setOpen(false);
+    }
+  };
+
+  const changeStatus = async (status: WatchStatus) => {
+    setLoading(true);
+    try {
+      const res = await libraryApi.updateWatchlistStatus(anime.malId, status);
+      setEntry({ status: res.data.status });
+      toast.success(`Moved to ${status.replace(/_/g, ' ')}`);
     } catch (e) {
       toast.error(apiErrorMessage(e));
     } finally {
@@ -60,31 +76,44 @@ export default function AddToListButton({ anime }: { anime: Anime }) {
 
   if (!entry) {
     return (
-      <div className="list-btn">
-        <button
-          type="button"
-          className="btn btn-ghost btn-lg"
-          onClick={() => setOpen((v) => !v)}
-          disabled={loading}
-        >
-          {loading ? "Adding..." : "+ Add to list"}
-        </button>
-        {open ? (
-          <div className="list-btn__menu">
-            {(["watching", "completed", "plan_to_watch", "on_hold", "dropped"] as WatchStatus[]).map((s) => (
-              <button key={s} type="button" className="list-btn__option" onClick={() => add(s)}>
-                {s.replace(/_/g, " ")}
-              </button>
-            ))}
-          </div>
-        ) : null}
-      </div>
+      <button
+        type="button"
+        className="btn btn-primary btn-lg"
+        onClick={() => add('plan_to_watch')}
+        disabled={loading}
+      >
+        {loading ? "Adding..." : "+ Add to list"}
+      </button>
     );
   }
 
   return (
-    <button type="button" className="btn btn-ghost btn-lg" onClick={remove} disabled={loading}>
-      {loading ? "Removing..." : `In list: ${entry.status.replace(/_/g, " ")} (click to remove)`}
-    </button>
+    <div className="list-btn">
+      <button
+        type="button"
+        className="btn btn-ghost btn-lg"
+        onClick={() => setOpen((v) => !v)}
+        disabled={loading}
+      >
+        {loading ? "Updating..." : `In list: ${entry.status.replace(/_/g, " ")} ▾`}
+      </button>
+      {open && (
+        <div className="list-btn__menu">
+          {STATUSES.map((s) => (
+            <button
+              key={s}
+              type="button"
+              className={`list-btn__option ${entry.status === s ? 'is-active' : ''}`}
+              onClick={() => changeStatus(s)}
+            >
+              {s.replace(/_/g, " ")}
+            </button>
+          ))}
+          <button type="button" className="list-btn__option danger" onClick={remove}>
+            Remove from list
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
