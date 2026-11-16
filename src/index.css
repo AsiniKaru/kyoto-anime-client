@@ -1648,7 +1648,9 @@ select {
   color: #fecaca;
 }
 
-/* ------------------------------ pagination ------------------------------- */
+.filter-reset-btn {
+  margin-left: auto;
+}
 
 .pagination {
   display: flex;

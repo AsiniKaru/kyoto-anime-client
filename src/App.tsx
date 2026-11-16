@@ -70,6 +70,14 @@ export default function App() {
             }
           />
           <Route
+            path="/my-list"
+            element={
+              <ProtectedRoute>
+                <MyList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin"
             element={
               <ProtectedRoute roles={['admin']}>

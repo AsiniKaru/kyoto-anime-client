@@ -181,12 +181,12 @@ export default function Browse() {
           </div>
           <span className="filterbar__count">{animeList.length} results</span>
         </div>
+        <div className="mb-3">
+          <button type="button" className="btn btn-primary btn-sm" onClick={surpriseMe} disabled={surprising}>
+            {surprising ? 'Surprising...' : '🎲 Surprise me'}
+          </button>
+        </div>
         <div className="filterbar__controls">
-          <Dropdown label="Type" value={filters.type} options={TYPE_OPTIONS} onChange={(v) => updateFilter('type', v)} />
-          <Dropdown label="Status" value={filters.status} options={STATUS_OPTIONS} onChange={(v) => updateFilter('status', v)} />
-          <Dropdown label="Sort" value={filters.orderBy} options={SORT_OPTIONS} onChange={(v) => updateFilter('orderBy', v)} />
-          <Dropdown label="Year" value={filters.year} options={yearOptions} onChange={(v) => updateFilter('year', v)} />
-
           <div className="genre-picker">
             <button
               type="button"
@@ -220,10 +220,12 @@ export default function Browse() {
             )}
           </div>
 
-          <button type="button" className="btn btn-primary btn-sm" onClick={surpriseMe} disabled={surprising}>
-            {surprising ? 'Surprising...' : '🎲 Surprise me'}
-          </button>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={resetFilters}>
+          <Dropdown label="Year" value={filters.year} options={yearOptions} onChange={(v) => updateFilter('year', v)} />
+          <Dropdown label="Type" value={filters.type} options={TYPE_OPTIONS} onChange={(v) => updateFilter('type', v)} />
+          <Dropdown label="Status" value={filters.status} options={STATUS_OPTIONS} onChange={(v) => updateFilter('status', v)} />
+          <Dropdown label="Sort" value={filters.orderBy} options={SORT_OPTIONS} onChange={(v) => updateFilter('orderBy', v)} />
+
+          <button type="button" className="btn btn-ghost btn-sm filter-reset-btn" onClick={resetFilters}>
             Reset
           </button>
         </div>
