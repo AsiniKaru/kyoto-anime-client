@@ -410,7 +410,7 @@ export default function AnimeDetails() {
         open={trailerOpen}
         onClose={() => setTrailerOpen(false)}
         title={anime.title}
-        trailer={trailer}
+        trailer={trailer ?? null}
       />
     </div>
   );

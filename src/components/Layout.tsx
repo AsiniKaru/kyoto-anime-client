@@ -20,7 +20,7 @@ export default function Layout() {
           <div className="flex items-center gap-2 text-sm">
             {user ? (
               <>
-                <span className="hidden sm:inline text-slate-300">Hi, {user.username}</span>
+                <span className="hidden sm:inline text-slate-300">Hi, {user.name}</span>
                 <button
                   onClick={() => { logout(); navigate("/"); }}
                   className="px-3 py-1.5 rounded-md bg-white/10 hover:bg-white/20"

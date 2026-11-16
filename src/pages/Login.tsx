@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { apiErrorMessage } from "../api/client";
 
 export default function Login() {
   const { login } = useAuth();
@@ -15,10 +16,10 @@ export default function Login() {
     setError("");
     setLoading(true);
     try {
-      await login(email, password);
+      await login({ email, password });
       navigate("/profile");
-    } catch (err: any) {
-      setError(err?.response?.data?.message || "Login failed");
+    } catch (err) {
+      setError(apiErrorMessage(err));
     } finally {
       setLoading(false);
     }

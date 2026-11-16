@@ -12,6 +12,11 @@ node_modules
 dist
 dist-ssr
 
+# TypeScript build info
+*.tsbuildinfo
+vite.config.d.ts
+vite.config.js
+
 # Env files (keep your secrets safe)
 .env
 .env.local

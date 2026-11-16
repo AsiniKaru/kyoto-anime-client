@@ -1,19 +1,28 @@
 import { Link } from "react-router-dom";
-import type { AnimeCardData } from "../types";
+import type { Anime } from "../types";
 
-export default function AnimeCard({ anime }: { anime: AnimeCardData }) {
-  const img = anime.images?.webp?.large_image_url || anime.images?.jpg?.large_image_url || anime.images?.jpg?.image_url;
+export default function AnimeCard({ anime }: { anime: Anime }) {
+  const img = anime.image || anime.imageSmall;
   return (
-    <Link to={`/anime/${anime.mal_id}`} className="group block rounded-xl overflow-hidden glass hover:shadow-glow transition">
-      <div className="aspect-[2/3] overflow-hidden bg-white/5">
-        {img ? <img src={img} alt={anime.title} className="w-full h-full object-cover group-hover:scale-105 transition duration-300" loading="lazy" /> : null}
-      </div>
-      <div className="p-3">
-        <h3 className="font-medium text-sm line-clamp-2 group-hover:text-white">{anime.title}</h3>
-        <div className="mt-1 text-xs text-slate-400 flex items-center gap-2">
-          {anime.score ? <span>★ {anime.score}</span> : <span>★ N/A</span>}
-          {anime.year ? <span>• {anime.year}</span> : null}
+    <Link to={`/anime/${anime.malId}`} className="anime-card block">
+      <div className="anime-card__poster">
+        {anime.score ? (
+          <span className="score-badge">{anime.score.toFixed(1)}</span>
+        ) : null}
+        {anime.airing ? <span className="airing-badge">Airing</span> : null}
+        {img ? (
+          <img src={img} alt={anime.title} loading="lazy" />
+        ) : null}
+        <div className="anime-card__overlay">
+          <span className="anime-card__play">▶</span>
+          <span className="anime-card__overlay-text">View details</span>
         </div>
+      </div>
+      <div className="anime-card__info">
+        <h3>{anime.title}</h3>
+        <p>
+          {anime.year ? anime.year : '—'} • {anime.type || 'Anime'}
+        </p>
       </div>
     </Link>
   );

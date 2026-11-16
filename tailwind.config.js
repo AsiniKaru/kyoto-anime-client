@@ -17,6 +17,7 @@ module.exports = {
           indigo: '#6366f1',
         },
         accent: '#22d3ee',
+        accent2: '#ec4899',
       },
       fontFamily: {
         display: ['Outfit', 'Segoe UI', 'system-ui', 'sans-serif'],

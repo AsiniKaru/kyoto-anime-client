@@ -1,30 +1,30 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../api/client";
 import AnimeCard from "../components/AnimeCard";
-import type { AnimeCardData } from "../types";
+import Spinner from "../components/Spinner";
+import type { Anime, HomeData } from "../types";
 
 export default function Home() {
-  const [popular, setPopular] = useState<AnimeCardData[]>([]);
-  const [season, setSeason] = useState<AnimeCardData[]>([]);
+  const [home, setHome] = useState<HomeData | null>(null);
+  const [season, setSeason] = useState<Anime[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [usingMock, setUsingMock] = useState(false);
+  const [active, setActive] = useState(0);
 
   useEffect(() => {
     const run = async () => {
       try {
         setError("");
-        const [p, s] = await Promise.all([
-          api.get("/anime/top", { params: { filter: "bypopularity", page: 1 } }),
-          api.get("/anime/season/now", { params: { page: 1 } }),
+        const [homeRes, seasonRes] = await Promise.all([
+          api.get("/anime/home"),
+          api.get("/anime/seasonal", { params: { limit: 18 } }),
         ]);
-        setPopular(p.data.data?.slice(0, 12) || []);
-        setSeason(s.data.data?.slice(0, 12) || []);
-        setUsingMock(p.data.source === "mock" || s.data.source === "mock");
+        setHome(homeRes.data.data || null);
+        setSeason(seasonRes.data.data || []);
       } catch (e: any) {
         console.error(e);
-        setError(e?.response?.data?.message || e?.message || "Failed to load anime data.");
+        setError(e?.message || "Failed to load anime data.");
       } finally {
         setLoading(false);
       }
@@ -32,58 +32,142 @@ export default function Home() {
     run();
   }, []);
 
+  const heroList = (home?.hero?.length ? home.hero : home?.trending || []).slice(0, 6);
+  const hero = heroList[active] || heroList[0];
+
+  // Auto-rotate hero slides
+  useEffect(() => {
+    if (heroList.length <= 1) return;
+    const timer = setInterval(() => {
+      setActive((i) => (i + 1) % heroList.length);
+    }, 6500);
+    return () => clearInterval(timer);
+  }, [heroList.length]);
+
+  const rows = [
+    { title: "Trending Now", list: home?.trending || [] },
+    { title: "This Season", list: season },
+    { title: "Top Rated", list: home?.topRated || [] },
+    { title: "Upcoming", list: home?.upcoming || [] },
+  ];
+
   return (
-    <div>
-      <section className="max-w-7xl mx-auto px-4 pt-10 pb-6">
-        <div className="rounded-3xl overflow-hidden glass p-8 md:p-12 relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-accent/20 via-transparent to-accent2/20" />
-          <div className="relative max-w-2xl">
-            <p className="text-accent font-medium mb-2">Welcome to Kyoto Anime</p>
-            <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-4">Discover, track, and enjoy anime in a cinematic space.</h1>
-            <p className="text-slate-300 mb-6">Browse titles, explore details, and stream in our player UI powered by Jikan metadata with placeholder playback.</p>
-            <div className="flex gap-3">
-              <Link to="/search" className="px-5 py-2.5 rounded-lg bg-accent hover:bg-rose-600 font-medium">Start Browsing</Link>
-              <Link to="/register" className="px-5 py-2.5 rounded-lg bg-white/10 hover:bg-white/20">Create Account</Link>
+    <div className="page--home">
+      {/* Floating hero slides */}
+      {loading ? (
+        <div className="hero"><Spinner label="Loading..." /></div>
+      ) : hero ? (
+        <section className="hero">
+          <div
+            className="hero__backdrop"
+            style={{ backgroundImage: `url(${hero.backdrop || hero.image})` }}
+          />
+          <div className="hero__scrim" />
+          <div className="container hero__inner">
+            <div className="hero__content">
+              <span className="hero__eyebrow">
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#a855f7" }} />
+                Featured
+              </span>
+              <h1>{hero.title}</h1>
+              {hero.titleJapanese ? <p className="hero__jp" style={{ color: "#9aa3b8", fontSize: "0.9rem", marginBottom: 10 }}>{hero.titleJapanese}</p> : null}
+              <div className="hero__meta">
+                {hero.score ? <span className="score-badge">★ {hero.score}</span> : null}
+                {hero.year ? <span>{hero.year}</span> : null}
+                {hero.episodes ? <span>{hero.episodes} eps</span> : null}
+                {hero.type ? <span>{hero.type}</span> : null}
+                {hero.status ? <span>{hero.status}</span> : null}
+              </div>
+              <p className="hero__synopsis" style={{ color: "#cfd5e6", fontSize: "0.95rem", lineHeight: 1.6, maxWidth: 600, marginBottom: 22, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                {hero.synopsis || "No synopsis available."}
+              </p>
+              <div className="hero__actions">
+                <Link to={`/watch/${hero.malId}`} className="btn btn-primary btn-lg">
+                  ▶ Watch now
+                </Link>
+                <Link to={`/anime/${hero.malId}`} className="btn btn-ghost btn-lg">
+                  More info
+                </Link>
+              </div>
+            </div>
+            <div className="hero__poster">
+              <img src={hero.image} alt={hero.title} style={{ width: 230, height: 345, objectFit: "cover", borderRadius: 16, boxShadow: "0 20px 60px -20px rgba(0,0,0,0.8)" }} />
             </div>
           </div>
-        </div>
-      </section>
 
-      <section className="max-w-7xl mx-auto px-4 py-6">
-        {usingMock && !error && (
-          <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-100">
-            <p className="font-medium">Showing sample anime data</p>
-            <p className="text-sm mt-1">Jikan API couldn’t be reached from your network/server, so the app is using a local fallback so you can continue using and demoing the site.</p>
-          </div>
-        )}
-        {error && (
-          <div className="mb-6 rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-rose-200">
-            <p className="font-medium">Couldn’t load anime from Jikan</p>
-            <p className="text-sm mt-1">{error}</p>
-            <p className="text-sm mt-2 text-rose-100/80">Check your internet connection, make sure the server is running, and try again. Jikan may be temporarily slow, rate-limited, or unreachable from your network.</p>
-          </div>
-        )}
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Popular Anime</h2>
-          <Link to="/search" className="text-sm text-slate-400 hover:text-white">View all</Link>
-        </div>
-        {loading ? <p className="text-slate-400">Loading...</p> : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {popular.map((a) => <AnimeCard key={a.mal_id} anime={a} />)}
-            {!popular.length && !error && <p className="text-slate-400 col-span-full">No popular anime loaded.</p>}
-          </div>
-        )}
-      </section>
+          {/* Slide dots */}
+          {heroList.length > 1 && (
+            <div className="hero__dots" style={{ position: "absolute", bottom: 24, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 8, zIndex: 5 }}>
+              {heroList.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setActive(i)}
+                  style={{
+                    width: i === active ? 24 : 8,
+                    height: 8,
+                    borderRadius: 999,
+                    border: "none",
+                    background: i === active ? "#a855f7" : "rgba(255,255,255,0.3)",
+                    cursor: "pointer",
+                    transition: "all 0.3s ease",
+                  }}
+                  aria-label={`Slide ${i + 1}`}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+      ) : null}
 
-      <section className="max-w-7xl mx-auto px-4 py-6 pb-12">
-        <h2 className="text-xl font-semibold mb-4">This Season</h2>
-        {loading ? <p className="text-slate-400">Loading...</p> : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {season.map((a) => <AnimeCard key={a.mal_id} anime={a} />)}
-            {!season.length && !error && <p className="text-slate-400 col-span-full">No seasonal anime loaded.</p>}
-          </div>
-        )}
-      </section>
+      {error && (
+        <div className="max-w-7xl mx-auto px-4 mb-6 rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-rose-200">
+          <p className="font-medium">Couldn't load anime</p>
+          <p className="text-sm mt-1">{error}</p>
+        </div>
+      )}
+
+      {/* Horizontal rows */}
+      {rows.map((section) =>
+        !loading && section.list.length ? (
+          <RowSection key={section.title} title={section.title} list={section.list} />
+        ) : null
+      )}
+
+      {loading && <p className="max-w-7xl mx-auto px-4 text-slate-400">Loading...</p>}
     </div>
+  );
+}
+
+function RowSection({ title, list }: { title: string; list: Anime[] }) {
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const scroll = (dir: -1 | 1) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * el.clientWidth * 0.9, behavior: "smooth" });
+  };
+
+  return (
+    <section className="row-section max-w-7xl mx-auto px-4">
+      <div className="row-section__head">
+        <div>
+          <h2>{title}</h2>
+        </div>
+        <Link to="/browse" className="row-section__link">View all →</Link>
+      </div>
+      <div className="row-section__viewport">
+        <button type="button" className="row-arrow row-arrow--left" onClick={() => scroll(-1)} aria-label="Scroll left">
+          ‹
+        </button>
+        <div className="row-section__scroller" ref={scrollerRef}>
+          {list.map((a) => (
+            <AnimeCard key={a.malId} anime={a} />
+          ))}
+        </div>
+        <button type="button" className="row-arrow row-arrow--right" onClick={() => scroll(1)} aria-label="Scroll right">
+          ›
+        </button>
+      </div>
+    </section>
   );
 }

@@ -6,10 +6,8 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      // The frontend talks to "/api" and Vite forwards it to the Express server.
-      // Port 5050 keeps this project clear of other local Express apps.
       '/api': {
-        target: process.env.VITE_PROXY_TARGET || 'http://localhost:5050',
+        target: process.env.VITE_PROXY_TARGET || 'http://127.0.0.1:5001',
         changeOrigin: true,
       },
     },

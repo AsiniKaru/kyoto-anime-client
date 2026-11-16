@@ -129,7 +129,12 @@ select {
   background: #3a4460;
 }
 
-/* ------------------------------- layout ------------------------------- */
+.glass {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.015));
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  backdrop-filter: blur(10px);
+}
 
 .app-shell {
   display: flex;

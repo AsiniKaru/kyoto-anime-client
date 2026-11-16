@@ -6,6 +6,7 @@ import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Browse from './pages/Browse';
+import Search from './pages/Search';
 import AnimeDetails from './pages/AnimeDetails';
 import Watch from './pages/Watch';
 import Login from './pages/Login';
@@ -13,6 +14,7 @@ import Register from './pages/Register';
 import Profile from './pages/Profile';
 import MyList from './pages/MyList';
 import AdminDashboard from './pages/AdminDashboard';
+import AIRecommender from './pages/AIRecommender';
 import NotFound from './pages/NotFound';
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import { bootstrapAuth } from './store/slices/authSlice';
@@ -46,15 +48,16 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/browse" element={<Browse />} />
+          <Route path="/search" element={<Search />} />
           <Route path="/anime/:id" element={<AnimeDetails />} />
           <Route path="/watch/:id" element={<Watch />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route
-            path="/my-list"
+            path="/ai"
             element={
               <ProtectedRoute>
-                <MyList />
+                <AIRecommender />
               </ProtectedRoute>
             }
           />
