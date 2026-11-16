@@ -1,45 +1,60 @@
 import { useEffect, useState } from "react";
 import { libraryApi } from "../api/library";
 import { apiErrorMessage } from "../api/client";
+import { useAuth } from "../context/AuthContext";
 import type { Anime, WatchStatus } from "../types";
 import toast from "react-hot-toast";
 
 const STATUSES: WatchStatus[] = ['watching', 'completed', 'plan_to_watch', 'on_hold', 'dropped'];
 
 export default function AddToListButton({ anime }: { anime: Anime }) {
+  const { user, isAuthenticated } = useAuth();
   const [entry, setEntry] = useState<{ status: WatchStatus } | null>(null);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
+    if (!isAuthenticated) return;
     let cancelled = false;
     libraryApi
       .getWatchlistEntry(anime.malId)
       .then((res: { data: { status: WatchStatus } | null }) => {
-        if (!cancelled) setEntry(res.data ? { status: res.data.status } : null);
+        if (!cancelled) setEntry(res && res.data ? { status: res.data.status } : null);
       })
-      .catch(() => {});
+      .catch((e) => {
+        console.error('getWatchlistEntry failed', e);
+      });
     return () => {
       cancelled = true;
     };
-  }, [anime.malId]);
+  }, [anime.malId, isAuthenticated]);
 
   const add = async (status: WatchStatus = 'plan_to_watch') => {
+    if (!isAuthenticated) {
+      toast.error('Please log in to add to your list');
+      return;
+    }
+    if (!anime || !anime.malId) {
+      toast.error('Invalid anime');
+      return;
+    }
     setLoading(true);
     try {
       const res = await libraryApi.addToWatchlist({
         malId: anime.malId,
-        title: anime.title,
-        image: anime.image,
-        year: anime.year,
-        score: anime.score,
-        type: anime.type,
-        genres: anime.genres.map((g) => g.name),
+        title: anime.title || 'Untitled',
+        image: anime.image || '',
+        year: anime.year ?? null,
+        score: anime.score ?? null,
+        type: anime.type || '',
+        genres: (anime.genres || []).map((g) => g.name),
         status,
       });
-      setEntry({ status: res.data.status });
-      toast.success(`Added to ${res.data.status.replace(/_/g, ' ')}`);
+      const newStatus = (res && res.data && res.data.status) ? res.data.status : status;
+      setEntry({ status: newStatus });
+      toast.success(`Added to ${newStatus.replace(/_/g, ' ')}`);
     } catch (e) {
+      console.error('addToWatchlist failed', e);
       toast.error(apiErrorMessage(e));
     } finally {
       setLoading(false);
@@ -51,9 +66,11 @@ export default function AddToListButton({ anime }: { anime: Anime }) {
     setLoading(true);
     try {
       const res = await libraryApi.updateWatchlistStatus(anime.malId, status);
-      setEntry({ status: res.data.status });
-      toast.success(`Moved to ${status.replace(/_/g, ' ')}`);
+      const newStatus = (res && res.data && res.data.status) ? res.data.status : status;
+      setEntry({ status: newStatus });
+      toast.success(`Moved to ${newStatus.replace(/_/g, ' ')}`);
     } catch (e) {
+      console.error('updateWatchlistStatus failed', e);
       toast.error(apiErrorMessage(e));
     } finally {
       setLoading(false);
@@ -68,6 +85,7 @@ export default function AddToListButton({ anime }: { anime: Anime }) {
       setEntry(null);
       toast.success("Removed from your list");
     } catch (e) {
+      console.error('removeFromWatchlist failed', e);
       toast.error(apiErrorMessage(e));
     } finally {
       setLoading(false);

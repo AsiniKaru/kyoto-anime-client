@@ -55,7 +55,29 @@ export default function MyList() {
       ) : (
         <div className="saved-grid">
           {visible.map((entry) => (
-            <div key={entry._id} className="saved-card">
+            <div key={entry._id} className="saved-card" style={{ position: "relative" }}>
+              <button
+                type="button"
+                onClick={() => dispatch(removeFromWatchlist(entry.malId))}
+                title="Remove from list"
+                style={{
+                  position: "absolute",
+                  top: 8,
+                  right: 8,
+                  width: 28,
+                  height: 28,
+                  borderRadius: "50%",
+                  border: "none",
+                  background: "rgba(0,0,0,0.55)",
+                  color: "#fff",
+                  cursor: "pointer",
+                  fontSize: 14,
+                  lineHeight: 1,
+                  zIndex: 2,
+                }}
+              >
+                ×
+              </button>
               <Link to={`/anime/${entry.malId}`} className="saved-card__poster">
                 {entry.image ? <img src={entry.image} alt={entry.title} /> : null}
               </Link>
@@ -64,23 +86,14 @@ export default function MyList() {
                 <span className="saved-card__status">
                   {WATCH_STATUS_LABELS[entry.status]}
                 </span>
-                <div className="saved-card__actions" style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 8 }}>
-                  <div style={{ flex: 1, minWidth: 140 }}>
-                    <Dropdown
-                      label="Status"
-                      value={entry.status}
-                      options={STATUS_DROPDOWN_OPTIONS}
-                      onChange={(v) => dispatch(updateWatchlistStatus({ malId: entry.malId, status: v as WatchStatus }))}
-                      width={160}
-                    />
-                  </div>
-                  <button
-                    className="btn btn-danger btn-sm"
-                    onClick={() => dispatch(removeFromWatchlist(entry.malId))}
-                    title="Remove from list"
-                  >
-                    Remove
-                  </button>
+                <div style={{ marginTop: 8 }}>
+                  <Dropdown
+                    label="Status"
+                    value={entry.status}
+                    options={STATUS_DROPDOWN_OPTIONS}
+                    onChange={(v) => dispatch(updateWatchlistStatus({ malId: entry.malId, status: v as WatchStatus }))}
+                    width={150}
+                  />
                 </div>
               </div>
             </div>
