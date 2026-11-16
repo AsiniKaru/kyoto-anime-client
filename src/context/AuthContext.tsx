@@ -1,75 +1,120 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import api from "../api/client";
-import type { User } from "../types";
+import { useCallback, type ReactNode } from 'react';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import {
+  changePassword as changePasswordThunk,
+  login as loginThunk,
+  logout as logoutThunk,
+  register as registerThunk,
+  setUser as setUserAction,
+  updateProfile as updateProfileThunk,
+} from '../store/slices/authSlice';
+import { apiErrorMessage } from '../api/client';
+import { authApi, type LoginInput, type PasswordInput, type ProfileInput, type RegisterInput } from '../api/auth';
+import type { AuthPayload, User } from '../types';
 
-interface AuthContextValue {
-  user: User | null;
-  token: string | null;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (username: string, email: string, password: string) => Promise<void>;
-  logout: () => void;
-  refresh: () => Promise<void>;
+export interface AuthResult {
+  success: true;
+  message: string;
+  data: AuthPayload;
 }
 
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+function asError(error: unknown): Error {
+  return new Error(typeof error === 'string' ? error : apiErrorMessage(error));
+}
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem("kyoto_token"));
-  const [loading, setLoading] = useState(true);
+/**
+ * Redux-backed compatibility hook. Components keep the familiar `useAuth()`
+ * API, while the actual session state lives in the Redux store.
+ */
+export function useAuth() {
+  const dispatch = useAppDispatch();
+  const { user, status, error } = useAppSelector((state) => state.auth);
 
-  const refresh = async () => {
-    if (!localStorage.getItem("kyoto_token")) {
-      setUser(null);
-      setLoading(false);
-      return;
-    }
-    try {
-      const { data } = await api.get("/auth/me");
-      setUser(data.user);
-    } catch {
-      localStorage.removeItem("kyoto_token");
-      setToken(null);
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const login = useCallback(
+    async (credentials: LoginInput): Promise<AuthResult> => {
+      try {
+        const payload = await dispatch(loginThunk(credentials)).unwrap();
+        return {
+          success: true,
+          message: `Welcome back, ${payload.user.name.split(' ')[0]}!`,
+          data: payload,
+        };
+      } catch (loginError) {
+        throw asError(loginError);
+      }
+    },
+    [dispatch]
+  );
 
-  useEffect(() => {
-    refresh();
+  const register = useCallback(
+    async (payload: RegisterInput): Promise<AuthResult> => {
+      try {
+        const result = await dispatch(registerThunk(payload)).unwrap();
+        return {
+          success: true,
+          message: `Welcome to SayonaraAnime, ${result.user.name.split(' ')[0]}!`,
+          data: result,
+        };
+      } catch (registerError) {
+        throw asError(registerError);
+      }
+    },
+    [dispatch]
+  );
+
+  const logout = useCallback(async (): Promise<void> => {
+    await dispatch(logoutThunk());
+  }, [dispatch]);
+
+  const setUser = useCallback(
+    (nextUser: User) => {
+      dispatch(setUserAction(nextUser));
+    },
+    [dispatch]
+  );
+
+  const updateProfile = useCallback(
+    async (payload: ProfileInput): Promise<User> => {
+      try {
+        return await dispatch(updateProfileThunk(payload)).unwrap();
+      } catch (profileError) {
+        throw asError(profileError);
+      }
+    },
+    [dispatch]
+  );
+
+  const changePassword = useCallback(
+    async (payload: PasswordInput): Promise<AuthPayload> => {
+      try {
+        return await dispatch(changePasswordThunk(payload)).unwrap();
+      } catch (passwordError) {
+        throw asError(passwordError);
+      }
+    },
+    [dispatch]
+  );
+
+  const deleteAccount = useCallback(async (password: string): Promise<void> => {
+    await authApi.deleteAccount(password);
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const { data } = await api.post("/auth/login", { email, password });
-    localStorage.setItem("kyoto_token", data.token);
-    setToken(data.token);
-    setUser(data.user);
+  return {
+    user,
+    isAuthenticated: Boolean(user),
+    initializing: status === 'idle' || status === 'loading',
+    error,
+    login,
+    register,
+    logout,
+    setUser,
+    updateProfile,
+    changePassword,
+    deleteAccount,
   };
+}
 
-  const register = async (username: string, email: string, password: string) => {
-    const { data } = await api.post("/auth/register", { username, email, password });
-    localStorage.setItem("kyoto_token", data.token);
-    setToken(data.token);
-    setUser(data.user);
-  };
-
-  const logout = () => {
-    localStorage.removeItem("kyoto_token");
-    setToken(null);
-    setUser(null);
-  };
-
-  return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout, refresh }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
-
-export const useAuth = () => {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
-  return ctx;
-};
+/** Kept so old imports keep working; state now comes from the Redux Provider. */
+export function AuthProvider({ children }: { children: ReactNode }) {
+  return <>{children}</>;
+}
