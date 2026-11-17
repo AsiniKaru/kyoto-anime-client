@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import ReactPlayer from "react-player";
+import AnimePlayer from "../components/AnimePlayer";
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { animeApi } from "../api/anime";
@@ -27,6 +27,20 @@ export default function Watch() {
 
   const embedTemplate = (import.meta.env.VITE_EMBED_URL_TEMPLATE as string) || "";
 
+  // 1. Restored YouTube check to prevent CORS crashes
+  const isYouTubeEmbed = useMemo(() => {
+    return /youtube\.com|youtu\.be/i.test(playerUrl);
+  }, [playerUrl]);
+
+  // 2. Restored YouTube URL formatter
+  const formattedPlayerUrl = useMemo(() => {
+    if (isYouTubeEmbed && !playerUrl.includes('/embed/')) {
+      const videoId = playerUrl.split('v=')[1]?.split('&')[0] || playerUrl.split('youtu.be/')[1];
+      return videoId ? `https://www.youtube.com/embed/${videoId}` : playerUrl;
+    }
+    return playerUrl;
+  }, [playerUrl, isYouTubeEmbed]);
+
   useEffect(() => {
     if (!id) return;
     let cancelled = false;
@@ -37,10 +51,31 @@ export default function Watch() {
         if (cancelled) return;
         setAnime(res.data.anime);
         setTrailer(res.data.trailer);
-        const url = embedTemplate
-          ? embedTemplate.replace("{malId}", id).replace("{episode}", ep)
-          : (res.data.trailer?.embedUrl || "");
-        setPlayerUrl(url);
+
+        // 3. Restored custom MongoDB/Cloudinary extraction logic
+        let customStreamUrl = "";
+        
+        if (Array.isArray(res.data.anime?.episodes) && res.data.anime.episodes.length > 0) {
+          const currentEpisodeData = res.data.anime.episodes.find(
+            (episode: any) => episode.episodeNumber === Number(ep)
+          );
+          if (currentEpisodeData) {
+            customStreamUrl = currentEpisodeData.videoUrl || "";
+          }
+        }
+        
+       if (!customStreamUrl && (res.data.anime as any)?.videoUrl) {
+          customStreamUrl = (res.data.anime as any).videoUrl;
+        }
+
+        if (customStreamUrl) {
+          setPlayerUrl(customStreamUrl);
+        } else {
+          const fallbackUrl = embedTemplate
+            ? embedTemplate.replace("{malId}", id).replace("{episode}", ep)
+            : (res.data.trailer?.embedUrl || "");
+          setPlayerUrl(fallbackUrl);
+        }
       })
       .catch(() => {})
       .finally(() => { if (!cancelled) setLoading(false); });
@@ -93,15 +128,26 @@ export default function Watch() {
           <p className="text-slate-400 text-sm">Now Playing</p>
           <h1 className="text-2xl font-bold">
             {anime?.title || "Loading..."}{" "}
-            <span className="text-slate-400 font-normal">• Episode {ep}</span>
+            - <span className="text-slate-400 font-normal">Episode {ep}</span>
           </h1>
         </div>
         {id && <Link to={`/anime/${id}`} className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-sm">Back to Details</Link>}
       </div>
 
       <div className="rounded-2xl overflow-hidden glass shadow-glow aspect-video bg-black">
+        {/* 4. Restored Player splitting (Iframe for fallback, AnimePlayer for custom HLS) */}
         {playerUrl ? (
-          <ReactPlayer url={playerUrl} controls width="100%" height="100%" />
+          isYouTubeEmbed ? (
+            <iframe
+              src={formattedPlayerUrl}
+              className="w-full h-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              title="Player"
+            />
+          ) : (
+            <AnimePlayer videoUrl={playerUrl} />
+          )
         ) : (
           <div className="w-full h-full grid place-items-center text-slate-400">Loading player...</div>
         )}
@@ -116,7 +162,6 @@ export default function Watch() {
         </div>
       )}
 
-      {/* Where to watch officially */}
       {anime?.streaming?.length ? (
         <section className="detail-section mt-8">
           <h2>Where to watch officially</h2>
@@ -130,7 +175,6 @@ export default function Watch() {
         </section>
       ) : null}
 
-      {/* Episodes */}
       {episodes.length ? (
         <section className="detail-section mt-8">
           <div className="section-title-row">
@@ -166,7 +210,6 @@ export default function Watch() {
         </section>
       ) : null}
 
-      {/* Main characters */}
       {characters.length ? (
         <section className="detail-section mt-8">
           <h2>Main characters</h2>
@@ -185,7 +228,6 @@ export default function Watch() {
         </section>
       ) : null}
 
-      {/* You might also like */}
       {recommendations.length ? (
         <section className="detail-section mt-8">
           <h2>You might also like</h2>
@@ -200,7 +242,6 @@ export default function Watch() {
         </section>
       ) : null}
 
-      {/* Reviews */}
       {anime ? (
         <section className="detail-section mt-8">
           <ReviewSection malId={anime.malId} animeTitle={anime.title} />
