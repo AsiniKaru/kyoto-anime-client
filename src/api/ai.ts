@@ -15,7 +15,9 @@ export const aiApi = {
     return response.data.data;
   },
   magicSearch: async (query: string): Promise<MagicSearchResponse> => {
-    const response = await api.post<ApiResponse<MagicSearchResponse>>('/ai/magic-search', { query });
+    const response = await api.post<ApiResponse<MagicSearchResponse>>('/ai/magic-search', { query, prompt: query });
     return response.data.data;
   },
 };
+
+
