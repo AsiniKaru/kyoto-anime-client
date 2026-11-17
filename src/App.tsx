@@ -6,6 +6,7 @@ import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Browse from './pages/Browse';
+import MagicSearch from './pages/MagicSearch';
 import Search from './pages/Search';
 import AnimeDetails from './pages/AnimeDetails';
 import Watch from './pages/Watch';
@@ -48,9 +49,17 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/browse" element={<Browse />} />
+          <Route path="/magic-search" element={<MagicSearch />} />
           <Route path="/search" element={<Search />} />
           <Route path="/anime/:id" element={<AnimeDetails />} />
-          <Route path="/watch/:id" element={<Watch />} />
+          <Route
+            path="/watch/:id"
+            element={
+              <ProtectedRoute>
+                <Watch />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route

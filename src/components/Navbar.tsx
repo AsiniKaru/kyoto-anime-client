@@ -26,6 +26,7 @@ export default function Navbar() {
         <nav className="navbar__links">
           <NavLink to="/" className={({ isActive }) => `nav-link ${isActive ? 'is-active' : ''}`}>Home</NavLink>
           <NavLink to="/browse" className={({ isActive }) => `nav-link ${isActive ? 'is-active' : ''}`}>Browse</NavLink>
+          <NavLink to="/magic-search" className={({ isActive }) => `nav-link ${isActive ? 'is-active' : ''}`}>Magic Search</NavLink>
           {isAuthenticated && (
             <NavLink to="/my-list" className={({ isActive }) => `nav-link ${isActive ? 'is-active' : ''}`}>My List</NavLink>
           )}

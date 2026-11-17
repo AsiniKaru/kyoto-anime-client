@@ -22,6 +22,7 @@ import PosterImage, { BackdropImage } from '../components/PosterImage';
 import ReviewSection from '../components/ReviewSection';
 import Spinner from '../components/Spinner';
 import TrailerModal from '../components/TrailerModal';
+import { useAuth } from '../context/AuthContext';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import { cleanSynopsis, formatCount, formatScore } from '../utils/format';
 import type {
@@ -45,6 +46,7 @@ interface EpisodeMeta {
 
 export default function AnimeDetails() {
   const { id } = useParams<{ id: string }>();
+  const { isAuthenticated } = useAuth();
 
   const [details, setDetails] = useState<DetailsData | null>(null);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
@@ -230,7 +232,7 @@ export default function AnimeDetails() {
             </div>
 
             <div className="detail-info__actions">
-              <Link to={`/watch/${anime.malId}`} className="btn btn-primary btn-lg">
+              <Link to={isAuthenticated ? `/watch/${anime.malId}` : '/login'} className="btn btn-primary btn-lg">
                 <Play size={18} fill="currentColor" /> Watch now
               </Link>
               {trailer?.videoId || trailer?.embedUrl ? (

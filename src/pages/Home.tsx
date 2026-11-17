@@ -79,7 +79,7 @@ function historyToAnime(h: HistoryEntry): Anime {
 }
 
 export default function Home() {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const history = useAppSelector((state) => state.library.history);
 
   const [home, setHome] = useState<HomeData | null>(null);
@@ -113,7 +113,6 @@ export default function Home() {
     .map(toSlide);
   const hero = heroList[active] || heroList[0];
 
-  // Continue watching: history entries with progress < 95
   const continueWatching = (user ? history.filter((h) => (h.progress || 0) < 95) : []).slice(0, 12);
 
   useEffect(() => {
@@ -167,7 +166,7 @@ export default function Home() {
                 </p>
               ) : null}
               <div className="hero__actions">
-                <Link to={`/watch/${hero.malId}`} className="btn btn-primary btn-lg">
+                <Link to={isAuthenticated ? `/watch/${hero.malId}` : '/login'} className="btn btn-primary btn-lg">
                   ▶ Watch now
                 </Link>
                 <Link to={`/anime/${hero.malId}`} className="btn btn-ghost btn-lg">
@@ -211,12 +210,8 @@ export default function Home() {
         </div>
       )}
 
-      {/* Continue watching (logged-in users) */}
       {user && continueWatching.length > 0 && (
-        <RowSection
-          title="Continue Watching"
-          list={continueWatching.map(historyToAnime)}
-        />
+        <RowSection title="Continue Watching" list={continueWatching.map(historyToAnime)} />
       )}
 
       {rows.map((section) =>
