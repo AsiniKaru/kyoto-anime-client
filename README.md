@@ -23,6 +23,12 @@ Kyoto Anime is a full-stack web application that lets users discover, browse, tr
 - Zod (input validation)
 - Helmet, CORS, Morgan, express-rate-limit
 
+Deployed URLs
+Frontend: https://kyoto-anime-client.vercel.app
+Backend: https://kyoto-anime-server.onrender.com
+Frontend Repository: https://github.com/AsiniKaru/kyoto-anime-client
+Backend Repository: https://github.com/AsiniKaru/kyoto-anime-server
+
 ## Features
 
 - Browse & search anime by title, genre, year, season, type, status and rating
@@ -38,7 +44,7 @@ Kyoto Anime is a full-stack web application that lets users discover, browse, tr
 
 ### Backend
 
-```bash
+bash
 cd "kyoto anime server"
 npm install
 cp .example.env .env   
@@ -72,14 +78,6 @@ npm run build          # outputs to dist/
 # backend
 npm run build          # compiles to dist/
 npm start              # runs dist/server.js
-
-
-Deployed URLs
-Frontend: https://kyoto-anime-client.vercel.app
-Backend: https://kyoto-anime-server.onrender.com
-Frontend Repository: https://github.com/AsiniKaru/kyoto-anime-client
-Backend Repository: https://github.com/AsiniKaru/kyoto-anime-server
-
 
 Project Structure
 src/
