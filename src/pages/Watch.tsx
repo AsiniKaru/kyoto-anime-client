@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams, Link } from "react-router-dom";
-import AnimePlayer from "../components/animePlayer"; // Replaced ReactPlayer with your custom HLS player
+import AnimePlayer from "../components/AnimePlayer"; 
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
 
