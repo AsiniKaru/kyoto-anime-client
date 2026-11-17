@@ -6,24 +6,14 @@ import { apiErrorMessage } from "../api/client";
 import toast from "react-hot-toast";
 
 export default function Profile() {
-  const { user, updateProfile, changePassword } = useAuth();
+  const { user, changePassword } = useAuth();
   const [watchlist, setWatchlist] = useState<any[]>([]);
   const [history, setHistory] = useState<any[]>([]);
-
-  // Profile details form
-  const [name, setName] = useState(user?.name || "");
-  const [email, setEmail] = useState(user?.email || "");
-  const [savingDetails, setSavingDetails] = useState(false);
 
   // Password form
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
-
-  useEffect(() => {
-    setName(user?.name || "");
-    setEmail(user?.email || "");
-  }, [user]);
 
   useEffect(() => {
     const run = async () => {
@@ -41,19 +31,6 @@ export default function Profile() {
       await api.delete(`/library/watchlist/${malId}`);
       setWatchlist((prev) => prev.filter((item) => item.malId !== malId));
     } catch (e) { console.error(e); }
-  };
-
-  const saveDetails = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSavingDetails(true);
-    try {
-      await updateProfile({ name, email });
-      toast.success("Profile updated");
-    } catch (err) {
-      toast.error(apiErrorMessage(err));
-    } finally {
-      setSavingDetails(false);
-    }
   };
 
   const savePassword = async (e: React.FormEvent) => {
@@ -81,19 +58,17 @@ export default function Profile() {
       <div className="profile-grid mb-8">
         <section className="card">
           <h2 className="text-xl font-semibold mb-3">Account details</h2>
-          <form className="profile-form" onSubmit={saveDetails}>
-            <label className="field">
+          <div className="profile-form">
+            <div className="field">
               <span>Name</span>
-              <input value={name} onChange={(e) => setName(e.target.value)} required />
-            </label>
-            <label className="field">
+              <input value={user?.name || ""} readOnly disabled />
+            </div>
+            <div className="field">
               <span>Email</span>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-            </label>
-            <button type="submit" className="btn btn-primary btn-sm" disabled={savingDetails}>
-              {savingDetails ? "Saving..." : "Save details"}
-            </button>
-          </form>
+              <input type="email" value={user?.email || ""} readOnly disabled />
+            </div>
+            <p className="muted text-sm">Account details cannot be changed.</p>
+          </div>
         </section>
 
         <section className="card">

@@ -9,7 +9,7 @@ export default function Layout() {
       <header className="sticky top-0 z-40 border-b border-white/10 bg-ink/80 backdrop-blur">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
           <Link to="/" className="flex items-center gap-2">
-            <span className="h-8 w-8 rounded-lg bg-gradient-to-br from-accent to-accent2 grid place-items-center font-bold">京</span>
+            <img src="/sakura-emblem.png" alt="Kyoto Anime" className="h-8 w-8 rounded-lg object-cover" />
             <span className="font-semibold tracking-wide text-lg">Kyoto Anime</span>
           </Link>
           <nav className="flex items-center gap-4 text-sm text-slate-300">

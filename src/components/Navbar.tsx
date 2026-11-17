@@ -20,7 +20,7 @@ export default function Navbar() {
     <header className="navbar">
       <div className="container navbar__inner">
         <Link to="/" className="logo">
-          <span className="logo__mark">京</span>
+          <img src="/sakura-emblem.png" alt="Kyoto Anime" className="logo__mark" style={{ width: 34, height: 34, objectFit: "cover", borderRadius: 10 }} />
           <span className="logo__text">Kyoto<span>Anime</span></span>
         </Link>
         <nav className="navbar__links">

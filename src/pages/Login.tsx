@@ -17,7 +17,7 @@ export default function Login() {
     setLoading(true);
     try {
       await login({ email, password });
-      navigate("/profile");
+      navigate("/");
     } catch (err) {
       setError(apiErrorMessage(err));
     } finally {

@@ -131,7 +131,6 @@ export default function Browse() {
   const surpriseMe = async () => {
     setSurprising(true);
     try {
-      // Prefer a random entry from the user's recent watch list / watchlist
       const pool = history.length ? history : watchlist;
       if (user && pool.length) {
         const pick = pool[Math.floor(Math.random() * pool.length)];
@@ -140,7 +139,6 @@ export default function Browse() {
           return;
         }
       }
-      // Fallback: server's random anime
       const res = await animeApi.getRandom();
       const malId = res.data?.malId;
       if (malId) navigate(`/anime/${malId}`);
@@ -171,6 +169,12 @@ export default function Browse() {
       </div>
 
       <div className="filterbar">
+        {/* Surprise me button in the right corner above the search box */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
+          <button type="button" className="btn btn-primary btn-sm" onClick={surpriseMe} disabled={surprising}>
+            {surprising ? 'Surprising...' : '🎲 Surprise me'}
+          </button>
+        </div>
         <div className="filterbar__top">
           <div className="filterbar__search">
             <input
@@ -181,12 +185,12 @@ export default function Browse() {
           </div>
           <span className="filterbar__count">{animeList.length} results</span>
         </div>
-        <div className="mb-3">
-          <button type="button" className="btn btn-primary btn-sm" onClick={surpriseMe} disabled={surprising}>
-            {surprising ? 'Surprising...' : '🎲 Surprise me'}
-          </button>
-        </div>
         <div className="filterbar__controls">
+          <Dropdown label="Type" value={filters.type} options={TYPE_OPTIONS} onChange={(v) => updateFilter('type', v)} />
+          <Dropdown label="Status" value={filters.status} options={STATUS_OPTIONS} onChange={(v) => updateFilter('status', v)} />
+          <Dropdown label="Sort" value={filters.orderBy} options={SORT_OPTIONS} onChange={(v) => updateFilter('orderBy', v)} />
+          <Dropdown label="Year" value={filters.year} options={yearOptions} onChange={(v) => updateFilter('year', v)} />
+
           <div className="genre-picker">
             <button
               type="button"
@@ -220,12 +224,7 @@ export default function Browse() {
             )}
           </div>
 
-          <Dropdown label="Year" value={filters.year} options={yearOptions} onChange={(v) => updateFilter('year', v)} />
-          <Dropdown label="Type" value={filters.type} options={TYPE_OPTIONS} onChange={(v) => updateFilter('type', v)} />
-          <Dropdown label="Status" value={filters.status} options={STATUS_OPTIONS} onChange={(v) => updateFilter('status', v)} />
-          <Dropdown label="Sort" value={filters.orderBy} options={SORT_OPTIONS} onChange={(v) => updateFilter('orderBy', v)} />
-
-          <button type="button" className="btn btn-ghost btn-sm filter-reset-btn" onClick={resetFilters}>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={resetFilters}>
             Reset
           </button>
         </div>

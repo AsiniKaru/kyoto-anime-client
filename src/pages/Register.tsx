@@ -18,7 +18,7 @@ export default function Register() {
     setLoading(true);
     try {
       await register({ name, email, password });
-      navigate("/profile");
+      navigate("/");
     } catch (err) {
       setError(apiErrorMessage(err));
     } finally {

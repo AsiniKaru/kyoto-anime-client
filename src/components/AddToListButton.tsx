@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import { useAppSelector } from "../store/hooks";
 import { libraryApi } from "../api/library";
-import { apiErrorMessage } from "../api/client";
+import { apiErrorMessage, getAccessToken, setAccessToken, refreshSession } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import type { Anime, WatchStatus } from "../types";
 import toast from "react-hot-toast";
@@ -9,9 +10,17 @@ const STATUSES: WatchStatus[] = ['watching', 'completed', 'plan_to_watch', 'on_h
 
 export default function AddToListButton({ anime }: { anime: Anime }) {
   const { user, isAuthenticated } = useAuth();
+  const reduxToken = useAppSelector((state) => state.auth.accessToken);
   const [entry, setEntry] = useState<{ status: WatchStatus } | null>(null);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+
+  // Keep the axios interceptor's in-memory token in sync with Redux.
+  useEffect(() => {
+    if (reduxToken && !getAccessToken()) {
+      setAccessToken(reduxToken);
+    }
+  }, [reduxToken]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -29,8 +38,22 @@ export default function AddToListButton({ anime }: { anime: Anime }) {
     };
   }, [anime.malId, isAuthenticated]);
 
+  const ensureToken = async () => {
+    if (getAccessToken()) return true;
+    if (reduxToken) {
+      setAccessToken(reduxToken);
+      if (getAccessToken()) return true;
+    }
+    try {
+      await refreshSession();
+      return !!getAccessToken();
+    } catch {
+      return false;
+    }
+  };
+
   const add = async (status: WatchStatus = 'plan_to_watch') => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !user) {
       toast.error('Please log in to add to your list');
       return;
     }
@@ -40,6 +63,11 @@ export default function AddToListButton({ anime }: { anime: Anime }) {
     }
     setLoading(true);
     try {
+      const ok = await ensureToken();
+      if (!ok) {
+        toast.error('Please log in to add to your list');
+        return;
+      }
       const res = await libraryApi.addToWatchlist({
         malId: anime.malId,
         title: anime.title || 'Untitled',
@@ -65,6 +93,8 @@ export default function AddToListButton({ anime }: { anime: Anime }) {
   const changeStatus = async (status: WatchStatus) => {
     setLoading(true);
     try {
+      const ok = await ensureToken();
+      if (!ok) { toast.error('Please log in'); return; }
       const res = await libraryApi.updateWatchlistStatus(anime.malId, status);
       const newStatus = (res && res.data && res.data.status) ? res.data.status : status;
       setEntry({ status: newStatus });
@@ -81,6 +111,8 @@ export default function AddToListButton({ anime }: { anime: Anime }) {
   const remove = async () => {
     setLoading(true);
     try {
+      const ok = await ensureToken();
+      if (!ok) { toast.error('Please log in'); return; }
       await libraryApi.removeFromWatchlist(anime.malId);
       setEntry(null);
       toast.success("Removed from your list");
