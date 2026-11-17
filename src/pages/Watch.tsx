@@ -32,7 +32,7 @@ export default function Watch() {
         if (fetchedAnime.type === "Movie" || fetchedAnime.type === "MOVIE") {
           customStreamUrl = fetchedAnime.videoUrl;
         } else if (fetchedAnime.episodes && fetchedAnime.episodes.length > 0) {
-          // Find the specific episode in the array
+
           const currentEpisodeData = fetchedAnime.episodes.find(
             (episode: any) => episode.episodeNumber === Number(ep)
           );
@@ -41,7 +41,7 @@ export default function Watch() {
           }
         }
 
-        // 2. Set the player URL (Custom HLS first, fallback to placeholders if empty)
+
         if (customStreamUrl) {
           setPlayerUrl(customStreamUrl);
           setNote("Playing directly from Kyoto Anime's custom streaming server.");
