@@ -251,9 +251,9 @@ export default function AnimeDetails() {
                   target="_blank"
                   rel="noreferrer"
                   className="btn btn-ghost btn-lg"
-                  title="View on AniList"
+                  title="View source"
                 >
-                  <ExternalLink size={17} /> AniList
+                  <ExternalLink size={17} /> Source
                 </a>
               ) : null}
             </div>

@@ -19,6 +19,7 @@ export default function ReviewSection({
   const [rating, setRating] = useState(8);
   const [comment, setComment] = useState("");
   const [saving, setSaving] = useState(false);
+  const [hover, setHover] = useState(0);
 
   const load = () => {
     libraryApi
@@ -46,6 +47,7 @@ export default function ReviewSection({
       await libraryApi.saveReview(malId, { rating, comment, animeTitle });
       toast.success("Thanks for your review!");
       setComment("");
+      setRating(8);
       load();
     } catch (err) {
       toast.error(apiErrorMessage(err));
@@ -64,8 +66,16 @@ export default function ReviewSection({
     }
   };
 
+  const initials = (name?: string) =>
+    (name || "A")
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase())
+      .join("");
+
   return (
-    <section className="reviews">
+    <div className="reviews">
       <div className="reviews__head">
         <h2>Reviews</h2>
         {average !== null ? (
@@ -79,19 +89,35 @@ export default function ReviewSection({
       {user ? (
         <form className="review-form" onSubmit={submit}>
           <div className="rating-picker">
-            <label>Rating</label>
-            <input
-              type="range"
-              min={1}
-              max={10}
-              value={rating}
-              onChange={(e) => setRating(Number(e.target.value))}
-            />
-            <span className="rating-picker__value">{rating}/10</span>
+            <label>Your rating</label>
+            <div style={{ display: "flex", gap: 4 }}>
+              {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onMouseEnter={() => setHover(n)}
+                  onMouseLeave={() => setHover(0)}
+                  onClick={() => setRating(n)}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: "1.1rem",
+                    color: n <= (hover || rating) ? "#fbbf24" : "rgba(255,255,255,0.25)",
+                    transition: "color 0.12s ease",
+                    padding: 0,
+                  }}
+                  aria-label={`Rate ${n}`}
+                >
+                  ★
+                </button>
+              ))}
+              <span className="rating-picker__value">{rating}/10</span>
+            </div>
           </div>
           <textarea
             className="field"
-            placeholder="Share your thoughts..."
+            placeholder="Share your thoughts about this anime..."
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             rows={3}
@@ -106,27 +132,36 @@ export default function ReviewSection({
         <p className="review-form__guest">Log in to leave a review.</p>
       )}
 
-      <div className="review-list">
+      <div className="review-list" style={{ marginTop: 16 }}>
         {reviews.length === 0 ? (
-          <p className="reviews__empty">No reviews yet. Be the first!</p>
+          <div className="reviews__empty" style={{ textAlign: "center", padding: "24px 0", color: "var(--muted)" }}>
+            No reviews yet. Be the first to share your thoughts!
+          </div>
         ) : (
           reviews.map((r) => (
-            <div key={r._id || r.id} className="review">
-              <div className="review__head">
-                <strong>{r.user?.name || "Anonymous"}</strong>
-                <span className="review__score">★ {r.rating}</span>
-                {user && r.user?.id === user._id ? (
-                  <button className="btn btn-ghost btn-sm" onClick={() => remove(r._id || r.id || "")}>
-                    Delete
-                  </button>
-                ) : null}
+            <div key={r._id || r.id} className="review" style={{ display: "flex", gap: 12, padding: "14px 0", borderBottom: "1px solid var(--line)" }}>
+              <div className="avatar avatar--sm" style={{ flexShrink: 0 }}>
+                {initials(r.user?.name)}
               </div>
-              <p>{r.comment}</p>
-              <small className="muted">{new Date(r.createdAt).toLocaleString()}</small>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="review__head" style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                  <strong>{r.user?.name || "Anonymous"}</strong>
+                  <span className="review__score">★ {r.rating}</span>
+                  <span className="muted" style={{ fontSize: "0.75rem", marginLeft: "auto" }}>
+                    {new Date(r.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                  </span>
+                  {user && r.user?.id === user._id ? (
+                    <button className="btn btn-ghost btn-sm" onClick={() => remove(r._id || r.id || "")}>
+                      Delete
+                    </button>
+                  ) : null}
+                </div>
+                <p style={{ margin: 0, color: "var(--text)", lineHeight: 1.5 }}>{r.comment || "—"}</p>
+              </div>
             </div>
           ))
         )}
       </div>
-    </section>
+    </div>
   );
 }

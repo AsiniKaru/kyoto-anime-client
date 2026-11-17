@@ -39,7 +39,7 @@ export default function MagicSearch() {
           <span className="page-heading__eyebrow">Magic Search</span>
           <h1>Search by vibe</h1>
           <p className="page-heading__sub">
-            Describe what you want in natural language — Gemini will find the anime for you.
+            Describe what you want in natural language — Kyoto will find the anime for you.
           </p>
         </div>
       </div>
@@ -62,7 +62,7 @@ export default function MagicSearch() {
       {error && <p className="alert alert--error">{error}</p>}
 
       {loading ? (
-        <Spinner label="Gemini is thinking..." />
+        <Spinner label="Kyoto is thinking..." />
       ) : (
         <div className="anime-grid">
           {results.map((anime) => (

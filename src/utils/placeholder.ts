@@ -1,4 +1,4 @@
-/** Inline SVG poster used when AniList has no image (keeps the layout stable). */
+/** Inline SVG poster used when no image is available (keeps the layout stable). */
 export const POSTER_PLACEHOLDER = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
   `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="450" viewBox="0 0 300 450">
     <defs>
