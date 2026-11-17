@@ -1,4 +1,4 @@
-import { useCallback, type ReactNode } from 'react';
+import { useCallback } from 'react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import {
   changePassword as changePasswordThunk,
@@ -112,9 +112,4 @@ export function useAuth() {
     changePassword,
     deleteAccount,
   };
-}
-
-/** Kept so old imports keep working; state now comes from the Redux Provider. */
-export function AuthProvider({ children }: { children: ReactNode }) {
-  return <>{children}</>;
 }

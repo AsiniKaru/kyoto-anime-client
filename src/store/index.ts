@@ -1,14 +1,12 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer, { clearAuth, setSession } from './slices/authSlice';
 import libraryReducer from './slices/librarySlice';
-import uiReducer from './slices/uiSlice';
 import type { AuthPayload } from '../types';
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     library: libraryReducer,
-    ui: uiReducer,
   },
 });
 

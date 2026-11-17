@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { animeApi, type SearchParams } from '../api/anime';
 import { apiErrorMessage } from '../api/client';
 import { useAppSelector } from '../store/hooks';
-import { libraryApi } from '../api/library';
 import AnimeCard from '../components/AnimeCard';
 import Spinner from '../components/Spinner';
 import Dropdown, { type DropdownOption } from '../components/Dropdown';
