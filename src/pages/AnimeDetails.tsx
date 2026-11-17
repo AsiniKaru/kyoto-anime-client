@@ -154,6 +154,8 @@ export default function AnimeDetails() {
   const shownSynopsis = expanded || !isLongSynopsis ? synopsis : `${synopsis.slice(0, 420)}…`;
   const episodePagination = episodeMeta?.pagination;
 
+  const episodeCount = Array.isArray(anime.episodes) ? anime.episodes.length : anime.episodes;
+  
   return (
     <div className="page page--details">
       <div className="detail-hero">
@@ -191,10 +193,10 @@ export default function AnimeDetails() {
                   {anime.year}
                 </span>
               ) : null}
-              {anime.episodes ? (
+             {episodeCount ? (
                 <span>
-                  <Tv size={14} /> {anime.episodes}{' '}
-                  {anime.episodes === 1 ? 'episode' : 'episodes'}
+                  <Tv size={14} /> {episodeCount as number}{' '}
+                  {episodeCount === 1 ? 'episode' : 'episodes'}
                 </span>
               ) : null}
               {anime.duration ? (
