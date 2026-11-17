@@ -92,16 +92,5 @@ src/
   types/        # TypeScript types
   utils/        # Formatters & helpers
 
-Screenshots
-![kyoto anime dashboard](image.png)
-![kyoto anime dashboard - treanding list](image-1.png)
-![kyoto anime browse page](image-2.png)
-![kyoto anime magic search](image-8.png)
-![kyoto anime myList](image-3.png)
-![kyoto anime user profile](image-4.png)
-![anime page 1](image-5.png)
-![anime page 2](image-6.png)
-![anime page 3](image-7.png)
-
 License
 Kyoto Anime - Rapid Application Development (RAD) final coursework by Asini Karunanayaka.
