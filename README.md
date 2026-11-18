@@ -23,11 +23,11 @@ Kyoto Anime is a full-stack web application that lets users discover, browse, tr
 - Zod (input validation)
 - Helmet, CORS, Morgan, express-rate-limit
 
-Deployed URLs
-Frontend: https://kyoto-anime-client.vercel.app
-Backend: https://kyoto-anime-server.onrender.com
-Frontend Repository: https://github.com/AsiniKaru/kyoto-anime-client
-Backend Repository: https://github.com/AsiniKaru/kyoto-anime-server
+##Deployed URLs
+- Frontend: https://kyoto-anime-client.vercel.app
+- Backend: https://kyoto-anime-server.onrender.com
+- Frontend Repository: https://github.com/AsiniKaru/kyoto-anime-client
+- Backend Repository: https://github.com/AsiniKaru/kyoto-anime-server
 
 ## Features
 
